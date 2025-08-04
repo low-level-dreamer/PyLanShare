@@ -9,7 +9,7 @@ import argparse
 
 from server import discovery_server_start
 import client
-
+import json
 PORT = 9527
 
 def scp_transfer(source_dir, ip, port, destination, username, password):
@@ -33,6 +33,7 @@ def scp_transfer(source_dir, ip, port, destination, username, password):
     except Exception as e:
         print(f"SCP transfer failed: {e}")
         return False
+
 def log_device_universal(server_list):
     ret_string=""
     if isinstance(server_list,dict):

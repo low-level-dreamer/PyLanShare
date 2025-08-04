@@ -1,11 +1,8 @@
 import json
 import socket
-import sys
 import time
 import platform
-import os
 from pathlib import Path
-import argparse
 import getpass
 """
 Import and run discovery_server_start(allow_loopback=False)
@@ -75,3 +72,7 @@ def discovery_server_start(ignore_blacklist=False):
 
             except Exception as e:
                 print(f"Error: {e}")
+
+if __name__=="__main__":
+    ignore_blacklist=True
+    discovery_server_start(ignore_blacklist=ignore_blacklist)

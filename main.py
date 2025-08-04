@@ -2,7 +2,7 @@ import argparse
 from server import discovery_server_start
 import client
 import getpass
-
+import os
 def print_logo():
     logo = ("|      _______ __   _      _______ _     _ _______  ______ _______\n"
             "|      |_____| | \\  |      |______ |_____| |_____| |_____/ |______\n"
@@ -29,13 +29,14 @@ def print_server_info(info):
     print(f"   OS: {info['os']}")
     print(f"   Download Directory: {info['download_dir']}")
     print("-" * 60)
-
+def is_file_empty(fname):
+    return True if os.path.getsize(fname) == 0 else False
 def main():
     parser= argparse.ArgumentParser(add_help=False)
     parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("-d","--discover",action="store_true", help="Discover devices")
     parser.add_argument("-s","--server",action="store_true", help="Run server")
-    parser.add_argument("-ab","--allowblacklist",action="store_true", help="allow server to connect to blacklisted IPs")
+    parser.add_argument("-ab","--allowblacklist",action="store_true",default=False, help="allow server to connect to blacklisted IPs")
     parser.add_argument("target",nargs="*")
     args=parser.parse_args()
     print_logo()
