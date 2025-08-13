@@ -1,6 +1,34 @@
 import socket
 import os
 PORT=9525
+
+def run_remote_command(ip, port, command):
+    """Connect to a remote server and send a command, returning the response as a string."""
+    s = socket.socket()
+    s.connect((ip, port))
+    s.sendall(command.encode())
+    response = b''
+    while True:
+        part = s.recv(4096)
+        if not part:
+            break
+        response += part
+        # For simple protocol, break after one response
+        break
+    s.close()
+    return response.decode()
+
+def handle_command(cmd):
+    """Handle a command string, run it using os.popen, and return the output."""
+    try:
+        with os.popen(cmd) as stream:
+            output = stream.read()
+        if not output:
+            output = "[No output]"
+    except Exception as e:
+        output = f"Error: {e}"
+    return output
+
 def command_server(port=PORT):
     s = socket.socket()
     s.bind(('', port))
@@ -13,14 +41,7 @@ def command_server(port=PORT):
         if not cmd or cmd.strip().lower() == 'exit':
             break
         print(f"Received command: {cmd}")
-        try:
-            # Use os.popen to run the command and capture output
-            with os.popen(cmd) as stream:
-                output = stream.read()
-            if not output:
-                output = "[No output]"
-        except Exception as e:
-            output = f"Error: {e}"
+        output = handle_command(cmd)
         print(f"Sending response: {output[:100]}...")  # Log first 100 chars
         conn.sendall(output.encode())
     conn.close()

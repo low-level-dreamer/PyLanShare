@@ -11,7 +11,8 @@ from server import discovery_server_start
 import client
 import json
 PORT = 9527
-
+P2PORT=9526
+SSHPORT=9525
 def scp_transfer(source_dir, ip, port, destination, username, password):
     import paramiko
     from scp import SCPClient
@@ -82,3 +83,29 @@ def discover_devices(timeout=3.0):
             return []
 
         return server_list
+
+
+def send_file(target_ip,file_path,port=9526):
+    s = socket.socket()
+    s.connect((target_ip, port))
+    with open(file_path, 'rb') as f:
+        data = f.read(1024)
+        while data:
+            s.send(data)
+            data = f.read(1024)
+    s.close()
+    print("File sent")
+
+import paramiko
+
+def ssh_to_target(host, username, password, command):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(host, username=username, password=password)
+    stdin, stdout, stderr = ssh.exec_command(command)
+    print(stdout.read().decode())
+    ssh.close()
+
+
+if __name__ == "__main__":
+    pass

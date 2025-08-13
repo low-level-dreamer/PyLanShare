@@ -1,4 +1,3 @@
-# file: p2p_receiver.py
 import socket
 
 def start_receiver(port=5001):

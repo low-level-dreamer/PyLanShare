@@ -38,6 +38,53 @@ def print_server_info(info,advanced=True):
         print("-" * 60)
 def is_file_empty(fname):
     return True if os.path.getsize(fname) == 0 else False
+def gather_info(user_password=True):
+    #Remove the following three print statement
+    print("Warning: ")
+    print("When using autoscp, The program will gather information from remote machine and format the scp transfer automatically")
+    print("The program will ask you to select a local machine and then ask password or username if the target server fails to retrieve that information")
+    print("In order to enable network discovery, the other machine must have a LanShare Server running, otherwise all transfer information needs to be provided manully")
+    print("Step1: Automatically gather all local devices that is available to be transfered to.")
+    print("Step2: Provide missing information for remote machine, eg Password, Username")
+    print("Done!")
+    server_list = client.discover_devices()
+    if len(server_list)==0:
+        print("No servers found")
+        return None
+    print("\nDiscovered Servers:")
+    print("-" * 60)
+    for server in server_list:
+        print_server_info(server)
+    server_num = 0
+    while server_num > len(server_list) or server_num < 0:
+        server_num = int(input("Please choose a server (0 to quit): "))
+    if server_num!=0:
+        print("Transfer Cancelled")
+        return None
+    target_server = server_list[server_num - 1]
+    if target_server["username"]:
+        username = target_server["username"]
+    elif user_password:
+        username=input("Enter username: ")
+    else:
+        username=None
+
+    confirm = "back"
+    while confirm=="back" and user_password:
+        passwd=getpass.getpass("Enter password:")
+        confirm=input("Initiate Transfer (yes/back/no): ")
+    if user_password:
+        while confirm != "no" or confirm != "yes":
+            confirm = input("Initiate Transfer (yes/no): ")
+
+    if confirm!="yes":
+        print("Transfer Cancelled")
+        return None
+    if user_password:
+        target_server["username"]=username
+        target_server["password"]=passwd
+    return target_server
+
 def main():
     parser= argparse.ArgumentParser(add_help=False)
     parser.add_argument("-h", "--help", action="store_true")
@@ -63,56 +110,31 @@ def main():
         discovery_server_start(args.allowblacklist)
     # autoscp transfer
     else:
-        if args.target[0]=="autoscp":
-            #Remove the following three print statement
-            print("Warning: ")
-            print("When using autoscp, The program will gather information from remote machine and format the scp transfer automatically")
-            print("The program will ask you to select a local machine and then ask password or username if the target server fails to retrieve that information")
-            print("In order to enable network discovery, the other machine must have a LanShare Server running, otherwise all transfer information needs to be provided manully")
-            print("Step1: Automatically gather all local devices that is available to be transfered to.")
-            print("Step2: Provide missing information for remote machine, eg Password, Username")
-            print("Done!")
-            server_list = client.discover_devices()
-            if len(server_list)==0:
-                print("No servers found")
-                return
-            print("\nDiscovered Servers:")
-            print("-" * 60)
-            for server in server_list:
-                print_server_info(server)
-            server_num = 0
-            while server_num > len(server_list) or server_num < 0:
-                server_num = int(input("Please choose a server (0 to quit): "))
-            if server_num!=0:
-                print("Transfer Cancelled")
-                return
-            target_server = server_list[server_num - 1]
-            if target_server["username"]:
-                username = target_server["username"]
-            else:
-                username=input("Enter username: ")
-            confirm = "back"
-            while confirm=="back":
-                passwd=getpass.getpass("Enter password:")
-                confirm=input("Initiate Transfer (yes/back/no): ")
-            if confirm!="yes":
-                print("Transfer Cancelled")
-                return
-            if client.scp_transfer(args.target[1],target_server['local_ip'],target_server['port'], target_server['download_dir'],\
-                            username,passwd):
-                print(f"Transfer Successful to {target_server['download_dir']}")
-            else:
-                print(f"Transfer Failed")
-                print(f"Try using the following command for alternative transfering via scp: ")
-                print(f"scp {args.target[1]} {username}@{target_server['local_ip']}:{target_server['download_dir']}")
-        elif args.target[0]=="discover":
-            server_list=client.discover_devices()
-            print("-" * 60)
-            for server in server_list:
-                print_server_info(server,args.advanced)
-        else:
-            # Print usage message
-            print_help()
+        match args.target[0]:
+            case "autoscp":
+                target_server=gather_info()
+                if target_server:
+                    if client.scp_transfer(args.target[1],target_server['local_ip'],target_server['port'], target_server['download_dir'],\
+                            target_server["username"],target_server["password"]):
+                        print(f"Transfer Successful to {target_server['download_dir']}")
+                    else:
+                        print(f"Transfer Failed")
+                        print(f"Try using the following command for alternative transfering via scp: ")
+                        print(f"scp {args.target[1]} {username}@{target_server['local_ip']}:{target_server['download_dir']}")
+                else:
+                    return
+            case "auto":
+                target_server=gather_info()
+            case "discover":
+                server_list=client.discover_devices()
+                print("-" * 60)
+                for server in server_list:
+                    print_server_info(server,args.advanced)
+            case "exec":
+                pass
+            case _:
+                # Print usage message
+                print_help()
 
 
 if __name__ == "__main__":
