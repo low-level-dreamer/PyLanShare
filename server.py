@@ -74,5 +74,4 @@ def discovery_server_start(ignore_blacklist=False):
                 print(f"Error: {e}")
 
 if __name__=="__main__":
-    ignore_blacklist=True
-    discovery_server_start(ignore_blacklist=ignore_blacklist)
+    discovery_server_start(ignore_blacklist=True)
