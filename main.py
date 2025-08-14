@@ -3,6 +3,8 @@ from server import discovery_server_start
 import client
 import getpass
 import os
+import config
+
 def print_logo():
     logo = ("|      _______ __   _      _______ _     _ _______  ______ _______\n"
             "|      |_____| | \\  |      |______ |_____| |_____| |_____/ |______\n"
@@ -55,10 +57,10 @@ def gather_info(user_password=True):
     print("-" * 60)
     for server in server_list:
         print_server_info(server)
-    server_num = 0
+    server_num = -1
     while server_num > len(server_list) or server_num < 0:
         server_num = int(input("Please choose a server (0 to quit): "))
-    if server_num!=0:
+    if server_num==0:
         print("Transfer Cancelled")
         return None
     target_server = server_list[server_num - 1]
@@ -73,8 +75,8 @@ def gather_info(user_password=True):
     while confirm=="back" and user_password:
         passwd=getpass.getpass("Enter password:")
         confirm=input("Initiate Transfer (yes/back/no): ")
-    if user_password:
-        while confirm != "no" or confirm != "yes":
+    if not user_password:
+        while confirm != "no" and confirm != "yes":
             confirm = input("Initiate Transfer (yes/no): ")
 
     if confirm!="yes":
@@ -120,18 +122,26 @@ def main():
                     else:
                         print(f"Transfer Failed")
                         print(f"Try using the following command for alternative transfering via scp: ")
-                        print(f"scp {args.target[1]} {username}@{target_server['local_ip']}:{target_server['download_dir']}")
+                        print(f"scp {args.target[1]} {target_server["username"]}@{target_server['local_ip']}:{target_server['download_dir']}")
                 else:
                     return
             case "auto":
-                target_server=gather_info()
+                target_server=gather_info(False)
+                if client.send_file_p2p(target_server["local_ip"],config.P2P_PORT,args.target[1]):
+                    print(f"Transfer Successful to {target_server['download_dir']}")
+                else:
+                    print(f"Transfer Failed")
             case "discover":
                 server_list=client.discover_devices()
                 print("-" * 60)
                 for server in server_list:
                     print_server_info(server,args.advanced)
             case "exec":
-                pass
+                target_server=gather_info(user_password = False)
+                if target_server==None:
+                    return
+                result=client.run_remote_command(target_server["local_ip"],config.SSH_PORT,args.target[1])
+                print(result)
             case _:
                 # Print usage message
                 print_help()

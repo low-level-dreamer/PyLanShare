@@ -1,6 +1,7 @@
 import socket
-
-def start_receiver(port=5001):
+import config
+PORT=config.P2P_PORT
+def start_receiver(port=PORT):
     s = socket.socket()
     s.bind(('', port))
     s.listen(1)

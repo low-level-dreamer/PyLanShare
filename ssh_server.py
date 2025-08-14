@@ -1,22 +1,9 @@
 import socket
 import os
-PORT=9525
+import config
+PORT=config.SSH_PORT
 
-def run_remote_command(ip, port, command):
-    """Connect to a remote server and send a command, returning the response as a string."""
-    s = socket.socket()
-    s.connect((ip, port))
-    s.sendall(command.encode())
-    response = b''
-    while True:
-        part = s.recv(4096)
-        if not part:
-            break
-        response += part
-        # For simple protocol, break after one response
-        break
-    s.close()
-    return response.decode()
+
 
 def handle_command(cmd):
     """Handle a command string, run it using os.popen, and return the output."""

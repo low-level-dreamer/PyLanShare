@@ -4,10 +4,11 @@ import time
 import platform
 from pathlib import Path
 import getpass
+import config
 """
 Import and run discovery_server_start(allow_loopback=False)
 """
-PORT = 9527
+PORT = config.DISCOVERY_PORT
 
 
 def get_local_ip():

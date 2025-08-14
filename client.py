@@ -106,6 +106,76 @@ def ssh_to_target(host, username, password, command):
     print(stdout.read().decode())
     ssh.close()
 
+def run_remote_command(ip, port, command):
+    """Connect to a remote server and send a command, returning the response as a string."""
+    s = socket.socket()
+    s.connect((ip, port))
+    s.sendall(command.encode())
+    response = b''
+    while True:
+        part = s.recv(4096)
+        if not part:
+            break
+        response += part
+        break
+    s.close()
+    return response.decode()
+
+
+def send_file_p2p(ip, port, file_path):
+    """
+    Send a file to the receiver server.
+
+    Args:
+        ip (str): IP address of the receiver server
+        port (int): Port number of the receiver server
+        file_path (str): Path to the file to be sent
+
+    Returns:
+        bool: True if file was sent successfully, False otherwise
+    """
+    try:
+        # Check if file exists
+        if not os.path.exists(file_path):
+            print(f"Error: File '{file_path}' does not exist.")
+            return False
+
+        # Get file size for progress tracking
+        file_size = os.path.getsize(file_path)
+        print(f"Sending file: {file_path} ({file_size} bytes)")
+
+        # Create socket and connect to server
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((ip, port))
+        print(f"Connected to {ip}:{port}")
+
+        # Send file in chunks
+        with open(file_path, 'rb') as f:
+            bytes_sent = 0
+            while True:
+                data = f.read(1024)
+                if not data:
+                    break
+                s.send(data)
+                bytes_sent += len(data)
+
+                # Optional: Show progress
+                progress = (bytes_sent / file_size) * 100
+                print(f"\rProgress: {progress:.1f}%", end = '')
+
+        print(f"\nFile sent successfully: {bytes_sent} bytes")
+        s.close()
+        return True
+
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found.")
+        return False
+    except ConnectionRefusedError:
+        print(f"Error: Could not connect to {ip}:{port}. Make sure the receiver is running.")
+        return False
+    except Exception as e:
+        print(f"Error sending file: {e}")
+        return False
 
 if __name__ == "__main__":
     pass
